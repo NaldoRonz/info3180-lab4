@@ -10,7 +10,7 @@ from flask_wtf import FlaskForm
 from flask import render_template, request, redirect, url_for, flash, session, abort
 from flask_wtf.file import FileField, FileRequired
 from werkzeug.utils import secure_filename
-from .form import UploadForm
+from .form import UploadForm, LoginForm
 
 
 ###
@@ -26,10 +26,10 @@ def home():
 @app.route('/about/')
 def about():
     """Render the website's about page."""
-    return render_template('about.html', name="Mary Jane")
+    return render_template('about.html', name="Naldo")
 
 
-@app.route('/upload', methods=['POST', 'GET'])
+@app.route('/upload', methods=['GET', 'POST'])
 def upload():
     if not session.get('logged_in'):
         abort(401)
@@ -40,21 +40,37 @@ def upload():
     # Validate file upload on submit
     if request.method == 'POST':
         if photo.validate_on_submit():
-            check = photo.pics.data
-            filename = secure_filename(photo.filename)
-            photo.save(os.path.join(app.config["UPLOAD_FOLDER"], file_name))
+            pics = photo.pics.data
+            filename = secure_filename(pics.filename)
+            pics.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
 
         # Get file data and save to your uploads folder
 
         flash('File Saved', 'success')
-        return redirect(url_for('home'))
+        return render_template('home.html', filename = filename)
 
     return render_template('upload.html', form = photo)
+
+
+def album():
+    rootdir = os.getcwd()
+    print(rootdir)
+    data = os.walk(rootdir+ "./app/static/uploads")
+    for subdir, dirs, files in data:
+        for file in files:
+            print (os.path.join(subdir,file))
+
+
+@app.route('/ViewImages')
+def ViewImages():
+     show_images = album()
+     return render_template('files.html', show_images = show_images )
 
 
 @app.route('/login', methods=['POST', 'GET'])
 def login():
     error = None
+    form = LoginForm()
     if request.method == 'POST':
         if request.form['username'] != app.config['USERNAME'] or request.form['password'] != app.config['PASSWORD']:
             error = 'Invalid username or password'
@@ -63,7 +79,7 @@ def login():
 
             flash('You were logged in', 'success')
             return redirect(url_for('upload'))
-    return render_template('login.html', error=error)
+    return render_template('login.html', form = form)
 
 
 @app.route('/logout')
