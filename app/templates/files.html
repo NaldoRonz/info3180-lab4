@@ -1,5 +1,9 @@
 {% extends 'base.html' %}
 {% block main %}
  <h1>Pictures</h1>
- {{show_images}}
+ {% for file in files %} 
+ <div class="grid-container">
+  <div class="grid-item"><img src = "{{url_for('static', filename = file.data)}}" alt = {{file.data}}></div>
+</div> 
+ {% endfor %}
 {% endblock %}

@@ -43,28 +43,32 @@ def upload():
             pics = photo.pics.data
             filename = secure_filename(pics.filename)
             pics.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
+            flash('File Saved', 'success')
+            return render_template('home.html', filename = filename)
 
-        # Get file data and save to your uploads folder
-
-        flash('File Saved', 'success')
-        return render_template('home.html', filename = filename)
+        else:
+            flash_errors(photo)
 
     return render_template('upload.html', form = photo)
 
 
-def album():
-    rootdir = os.getcwd()
-    print(rootdir)
-    data = os.walk(rootdir+ "./app/static/uploads")
-    for subdir, dirs, files in data:
-        for file in files:
-            print (os.path.join(subdir,file))
-
-
 @app.route('/ViewImages')
 def ViewImages():
-     show_images = album()
-     return render_template('files.html', show_images = show_images )
+   return redirect(url_for('get_uploaded_images'))
+
+
+@app.route('/get_uploaded_images')
+def get_uploaded_images():
+    lst = []
+    rootdir = os.getcwd() 
+    chosen = app.config["ALLOWED_EXTENSIONS"] 
+    for subdir, dirs, files in os.walk(rootdir + "./app/static/uploads"):     
+        for file in files:
+            if '.' in file and file.rsplit('.', 1)[1].lower() in chosen:       
+                content = os.path.join(subdir, file)
+                lst.append(content)
+                print(lst)
+    return render_template("files.html", files = files)
 
 
 @app.route('/login', methods=['POST', 'GET'])
